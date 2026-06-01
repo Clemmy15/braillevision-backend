@@ -18,6 +18,7 @@ from braillevision.core.detection import DotDetector
 from braillevision.core.preprocessing import Preprocessor
 from braillevision.core.quality import QualityAnalyzer, QualityStatus
 from braillevision.core.segmentation import CellSegmenter
+from braillevision.core.realtime import RealtimeAssistant
 from braillevision.core.validation import compute_realistic_confidence, stabilize_text
 from braillevision.core.visualization import Visualizer
 
@@ -33,6 +34,7 @@ class _Pipeline:
 
 
 _PIPELINE: Optional[_Pipeline] = None
+_GUIDANCE = RealtimeAssistant()
 _LAST_STABLE: Dict[str, Any] = {"signature": "", "text": "", "confidence": 0.0}
 
 
@@ -111,6 +113,41 @@ def _stabilize_decode(text: str, confidence: float, cells) -> tuple[str, float]:
         return str(_LAST_STABLE["text"]), float(_LAST_STABLE["confidence"])
 
     return text, confidence
+
+
+def _build_speech_guidance(
+    gray,
+    binary,
+    dot_count: int,
+    decoded_text: str,
+    confidence: float,
+) -> str:
+    """Natural-language prompts for text-to-speech accessibility."""
+    guidance = _GUIDANCE.analyze(gray, binary, dot_count)
+    text = decoded_text.strip()
+
+    if not guidance.is_good:
+        hint = guidance.message.rstrip(".")
+        if text and confidence >= 55.0:
+            return f"{hint}. I read: {text}."
+        if text:
+            return (
+                f"{hint}. I think it says {text}, "
+                "but I am not confident. Please try again."
+            )
+        return f"{hint}. I could not read the Braille clearly. Please try again."
+
+    if text and confidence >= 55.0:
+        return f"Good capture. I read: {text}."
+    if text:
+        return (
+            f"I read {text}, but the scan was uncertain. "
+            "Hold steady, move a little closer, and try again."
+        )
+    return (
+        "The image looks okay, but I could not detect readable Braille. "
+        "Move closer, improve the lighting, and scan again."
+    )
 
 
 def _debug_enabled(debug: Optional[bool]) -> bool:
@@ -205,6 +242,14 @@ def process_image_array(
             output_dir=Path("output/debug_accuracy"),
         )
 
+    guidance_speech = _build_speech_guidance(
+        result.grayscale,
+        result.binary,
+        len(dots),
+        text,
+        confidence,
+    )
+
     elapsed_ms = round((time.perf_counter() - start) * 1000.0, 1)
     fps_estimate = round(min(1000.0 / max(elapsed_ms, 1.0), 60.0), 1)
 
@@ -213,6 +258,7 @@ def process_image_array(
         "confidence": round(confidence, 1),
         "quality": quality_code,
         "quality_message": quality.message,
+        "guidance_speech": guidance_speech,
         "annotated_image": _image_to_base64_jpeg(annotated),
         "original_image": _image_to_base64_jpeg(result.original),
         "processing_time_ms": elapsed_ms,

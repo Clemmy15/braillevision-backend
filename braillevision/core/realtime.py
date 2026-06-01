@@ -143,27 +143,27 @@ class RealtimeAssistant:
         is_good = report.is_acceptable
 
         if report.status == QualityStatus.TOO_DARK:
-            message = "Increase lighting"
+            message = "Too dark — please increase lighting"
             quality_label = "LOW"
             is_good = False
         elif report.status == QualityStatus.TOO_BRIGHT:
-            message = "Reduce glare or lighting"
+            message = "Too bright — reduce glare or dim the light"
             quality_label = "LOW"
             is_good = False
         elif report.status == QualityStatus.TOO_BLURRY:
-            message = "Hold camera steady — image blurry"
+            message = "Hold the camera steady — the image is blurry"
             quality_label = "BLURRY"
             is_good = False
         elif dot_density < self.far_dot_density:
-            message = "Too far from page — move camera closer"
+            message = "You are too far away — move the camera closer"
             quality_label = "LOW"
             is_good = False
         elif dot_density < self.min_dot_density or report.status == QualityStatus.MOVE_CLOSER:
-            message = "Move camera closer"
+            message = "Move the camera closer to the Braille"
             quality_label = "LOW"
             is_good = False
         elif suggest_straighten:
-            message = "Tilt camera to straighten page"
+            message = "Tilt the camera to straighten the page"
             quality_label = "LOW"
             is_good = False
         elif is_good:
