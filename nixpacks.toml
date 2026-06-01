@@ -1,10 +1,8 @@
-# Railway / Nixpacks — headless OpenCV + production API start
-[phases.setup]
-nixPkgs = ["python313", "gcc"]
+# Railway / Nixpacks — do NOT override install cmds (that skips Python/venv setup).
+# Only add system libs for OpenCV headless and set the production start command.
 
 [phases.install]
 aptPkgs = ["libglib2.0-0", "libgomp1", "libgl1"]
-cmds = ["pip install -r requirements.txt"]
 
 [start]
-cmd = "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"
+cmd = "uvicorn app:app --host 0.0.0.0 --port $PORT"
