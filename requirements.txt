@@ -1,4 +1,5 @@
-opencv-python>=4.8.0
+# Headless build: required on Linux servers (Railway/Docker) — no GUI/X11 libs
+opencv-python-headless>=4.8.0
 numpy>=1.24.0
 scikit-image>=0.21.0
 pyttsx3>=2.90

@@ -1,0 +1,10 @@
+# Railway / Nixpacks — headless OpenCV + production API start
+[phases.setup]
+nixPkgs = ["python313", "gcc"]
+
+[phases.install]
+aptPkgs = ["libglib2.0-0", "libgomp1", "libgl1"]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"
